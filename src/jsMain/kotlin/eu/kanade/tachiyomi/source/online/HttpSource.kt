@@ -1,13 +1,11 @@
 package eu.kanade.tachiyomi.source.online
 
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.source.model.*
-import okhttp3.Headers
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
+import okhttp3.*
 import rx.Observable
 
 /**
@@ -37,7 +35,7 @@ abstract class HttpSource : CatalogueSource {
      * of the MD5 of the string: sourcename/language/versionId
      * Note the generated id sets the sign bit to 0.
      */
-//    override val id: Long = throw Exception("Stub!")
+    override val id: Long = 1 // throw Exception("Stub!")
 
     /**
      * Headers used for requests.
@@ -124,7 +122,11 @@ abstract class HttpSource : CatalogueSource {
      * @param page the page number to retrieve.
      */
     override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
-        throw Exception("fetchLatestUpdates!")
+        return client.newCall(latestUpdatesRequest(page))
+            .asObservableSuccess()
+            .map { response ->
+                latestUpdatesParse(response)
+            }
     }
 
     /**
@@ -148,7 +150,11 @@ abstract class HttpSource : CatalogueSource {
      * @param manga the manga to be updated.
      */
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        throw Exception("fetchMangaDetails!")
+        return client.newCall(mangaDetailsRequest(manga))
+            .asObservableSuccess()
+            .map { response ->
+                mangaDetailsParse(response).apply { initialized = true }
+            }
     }
 
     /**
@@ -158,7 +164,7 @@ abstract class HttpSource : CatalogueSource {
      * @param manga the manga to be updated.
      */
     open fun mangaDetailsRequest(manga: SManga): Request {
-        throw Exception("mangaDetailsRequest!!")
+        return GET(baseUrl + manga.url, headers)
     }
 
     /**
@@ -175,7 +181,15 @@ abstract class HttpSource : CatalogueSource {
      * @param manga the manga to look for chapters.
      */
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        throw Exception("fetchChapterList!!")
+        return if (manga.status != SManga.LICENSED) {
+            client.newCall(chapterListRequest(manga))
+                .asObservableSuccess()
+                .map { response ->
+                    chapterListParse(response)
+                }
+        } else {
+            Observable.error(Exception("Licensed - No chapters to show"))
+        }
     }
 
     /**
@@ -185,7 +199,7 @@ abstract class HttpSource : CatalogueSource {
      * @param manga the manga to look for chapters.
      */
     open protected fun chapterListRequest(manga: SManga): Request {
-        throw Exception("chapterListRequest!!")
+        return GET(baseUrl + manga.url, headers)
     }
 
     /**
@@ -201,7 +215,11 @@ abstract class HttpSource : CatalogueSource {
      * @param chapter the chapter whose page list has to be fetched.
      */
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
-        throw Exception("fetchPageList!!")
+        return client.newCall(pageListRequest(chapter))
+            .asObservableSuccess()
+            .map { response ->
+                pageListParse(response)
+            }
     }
 
     /**
@@ -211,7 +229,7 @@ abstract class HttpSource : CatalogueSource {
      * @param chapter the chapter whose page list has to be fetched.
      */
     open protected fun pageListRequest(chapter: SChapter): Request {
-        throw Exception("pageListRequest!!")
+        return GET(baseUrl + chapter.url, headers)
     }
 
     /**
@@ -228,7 +246,9 @@ abstract class HttpSource : CatalogueSource {
      * @param page the page whose source image has to be fetched.
      */
     open fun fetchImageUrl(page: Page): Observable<String> {
-        throw Exception("fetchImageUrl!!")
+        return client.newCall(imageUrlRequest(page))
+            .asObservableSuccess()
+            .map { imageUrlParse(it) }
     }
 
     /**
@@ -238,7 +258,7 @@ abstract class HttpSource : CatalogueSource {
      * @param page the chapter whose page list has to be fetched
      */
     open protected fun imageUrlRequest(page: Page): Request {
-        throw Exception("imageUrlRequest!!")
+        return GET(page.url, headers)
     }
 
     /**
@@ -254,6 +274,8 @@ abstract class HttpSource : CatalogueSource {
      * @param page the page whose source image has to be downloaded.
      */
     fun fetchImage(page: Page): Observable<Response> {
+//        return client.newCachelessCallWithProgress(imageRequest(page), page)
+//            .asObservableSuccess()
         throw Exception("fetchImage!!")
     }
 
@@ -264,7 +286,7 @@ abstract class HttpSource : CatalogueSource {
      * @param page the chapter whose page list has to be fetched
      */
     open protected fun imageRequest(page: Page): Request {
-        throw Exception("imageRequest!!")
+        return GET(page.imageUrl!!, headers)
     }
 
     /**
@@ -274,7 +296,7 @@ abstract class HttpSource : CatalogueSource {
      * @param url the full url to the chapter.
      */
     fun SChapter.setUrlWithoutDomain(url: String) {
-        throw Exception("setUrlWithoutDomain!!")
+        this.url = getUrlWithoutDomain(url)
     }
 
     /**
@@ -284,7 +306,7 @@ abstract class HttpSource : CatalogueSource {
      * @param url the full url to the manga.
      */
     fun SManga.setUrlWithoutDomain(url: String) {
-        throw Exception("setUrlWithoutDomain!!")
+        this.url = getUrlWithoutDomain(url)
     }
 
     /**
@@ -293,7 +315,25 @@ abstract class HttpSource : CatalogueSource {
      * @param orig the full url.
      */
     private fun getUrlWithoutDomain(orig: String): String {
-        throw Exception("getUrlWithoutDomain!!")
+//        return try {
+//            val uri = URI(orig.replace(" ", "%20"))
+//            var out = uri.path
+//            if (uri.query != null) {
+//                out += "?" + uri.query
+//            }
+//            if (uri.fragment != null) {
+//                out += "#" + uri.fragment
+//            }
+//            out
+//        } catch (e: URISyntaxException) {
+//            orig
+//        }
+        return try {
+            val httpUrl = HttpUrl.Builder().parse(null, orig)
+            httpUrl.encodedPathSegments.joinToString("/", prefix = "/")
+        } catch (e: Exception) {
+            orig
+        }
     }
     
     /**
@@ -304,7 +344,7 @@ abstract class HttpSource : CatalogueSource {
      * @return url of the manga
      */
     open fun getMangaUrl(manga: SManga): String {
-        throw Exception("getMangaUrl!!")
+        return mangaDetailsRequest(manga).url.toString()
     }
 
     /**
@@ -315,7 +355,7 @@ abstract class HttpSource : CatalogueSource {
      * @return url of the chapter
      */
     open fun getChapterUrl(chapter: SChapter): String {
-        throw Exception("getChapterUrl!!")
+        return pageListRequest(chapter).url.toString()
     }
 
     /**
@@ -330,7 +370,5 @@ abstract class HttpSource : CatalogueSource {
     /**
      * Returns the list of filters for the source.
      */
-    override fun getFilterList(): FilterList {
-        throw Exception("getFilterList!!")
-    }
+    override fun getFilterList() = FilterList()
 }

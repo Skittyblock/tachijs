@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -20,7 +21,25 @@ abstract class ParsedHttpSource : HttpSource() {
      * @param response the response from the site.
      */
     override fun popularMangaParse(response: Response): MangasPage {
-        throw Exception("parse popular manga!")
+//        console.log("popular manga parse")
+
+        val document = response.asJsoup()
+
+//        console.log("mangas!")
+
+        val mangas = document.select(popularMangaSelector()).map { element ->
+            popularMangaFromElement(element)
+        }
+
+//        console.log("next page!")
+
+        val hasNextPage = popularMangaNextPageSelector()?.let { selector ->
+            document.select(selector).first()
+        } != null
+
+//        console.log("done!")
+
+        return MangasPage(mangas, hasNextPage)
     }
 
     /**
@@ -48,7 +67,17 @@ abstract class ParsedHttpSource : HttpSource() {
      * @param response the response from the site.
      */
     override fun searchMangaParse(response: Response): MangasPage {
-        throw Exception("searchMangaParse!")
+        val document = response.asJsoup()
+
+        val mangas = document.select(searchMangaSelector()).map { element ->
+            searchMangaFromElement(element)
+        }
+
+        val hasNextPage = searchMangaNextPageSelector()?.let { selector ->
+            document.select(selector).first()
+        } != null
+
+        return MangasPage(mangas, hasNextPage)
     }
 
     /**
@@ -76,7 +105,17 @@ abstract class ParsedHttpSource : HttpSource() {
      * @param response the response from the site.
      */
     override fun latestUpdatesParse(response: Response): MangasPage {
-        throw Exception("latestUpdatesParse!")
+        val document = response.asJsoup()
+
+        val mangas = document.select(latestUpdatesSelector()).map { element ->
+            latestUpdatesFromElement(element)
+        }
+
+        val hasNextPage = latestUpdatesNextPageSelector()?.let { selector ->
+            document.select(selector).first()
+        } != null
+
+        return MangasPage(mangas, hasNextPage)
     }
 
     /**
@@ -104,7 +143,7 @@ abstract class ParsedHttpSource : HttpSource() {
      * @param response the response from the site.
      */
     override fun mangaDetailsParse(response: Response): SManga {
-        throw Exception("mangaDetailsParse!")
+        return mangaDetailsParse(response.asJsoup())
     }
 
     /**
@@ -120,7 +159,8 @@ abstract class ParsedHttpSource : HttpSource() {
      * @param response the response from the site.
      */
     override fun chapterListParse(response: Response): List<SChapter> {
-        throw Exception("chapterListParse!")
+        val document = response.asJsoup()
+        return document.select(chapterListSelector()).map { chapterFromElement(it) }
     }
 
     /**
@@ -141,7 +181,7 @@ abstract class ParsedHttpSource : HttpSource() {
      * @param response the response from the site.
      */
     override fun pageListParse(response: Response): List<Page> {
-        throw Exception("pageListParse!")
+        return pageListParse(response.asJsoup())
     }
 
     /**
@@ -157,7 +197,7 @@ abstract class ParsedHttpSource : HttpSource() {
      * @param response the response from the site.
      */
     override fun imageUrlParse(response: Response): String {
-        throw Exception("imageUrlParse!")
+        return imageUrlParse(response.asJsoup())
     }
 
     /**

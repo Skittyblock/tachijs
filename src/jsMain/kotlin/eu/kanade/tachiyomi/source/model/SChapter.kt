@@ -13,9 +13,7 @@ interface SChapter {
     var scanlator: String?
 
     companion object {
-        fun create(): SChapter {
-            throw Exception("Stub!")
-        }
+        fun create(): SChapter = SChapterImpl()
     }
 
 }

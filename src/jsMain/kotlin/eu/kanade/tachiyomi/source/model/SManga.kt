@@ -22,6 +22,49 @@ interface SManga {
 
     var initialized: Boolean
 
+    fun copyFrom(other: SManga) {
+        if (other.author != null) {
+            author = other.author
+        }
+
+        if (other.artist != null) {
+            artist = other.artist
+        }
+
+        if (other.description != null) {
+            description = other.description
+        }
+
+        if (other.genre != null) {
+            genre = other.genre
+        }
+
+        if (other.thumbnail_url != null) {
+            thumbnail_url = other.thumbnail_url
+        }
+
+        status = other.status
+
+        update_strategy = other.update_strategy
+
+        if (!initialized) {
+            initialized = other.initialized
+        }
+    }
+
+    fun copy() = create().also {
+        it.url = url
+        it.title = title
+        it.artist = artist
+        it.author = author
+        it.description = description
+        it.genre = genre
+        it.status = status
+        it.thumbnail_url = thumbnail_url
+        it.update_strategy = update_strategy
+        it.initialized = initialized
+    }
+
     companion object {
         const val UNKNOWN = 0
         const val ONGOING = 1
@@ -32,7 +75,7 @@ interface SManga {
         const val ON_HIATUS = 6
 
         fun create(): SManga {
-            throw Exception("Stub!")
+            return SMangaImpl()
         }
     }
 

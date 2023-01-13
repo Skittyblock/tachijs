@@ -3,8 +3,10 @@ package okhttp3
 class Request internal constructor(
     builder: Builder
 ) {
+    val url: HttpUrl = builder.url!!
     val method: String = builder.method
     val headers: Headers = builder.headers.build()
+//    val body: RequestBody = builder.body
 
     open class Builder {
         var url: HttpUrl? = null

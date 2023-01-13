@@ -2,7 +2,24 @@ package okhttp3
 
 class Headers internal constructor(
     internal val namesAndValues: Array<String>
-) { //: Iterable<Pair<String, String>> {
+) : Iterable<Pair<String, String>> {
+    operator fun get(name: String): String? {
+        for (i in namesAndValues.size - 2 downTo 0 step 2) {
+            if (name.equals(namesAndValues[i], ignoreCase = true)) {
+                return namesAndValues[i + 1]
+            }
+        }
+        return null
+    }
+
+    val size: Int
+        get() = namesAndValues.size / 2
+
+    fun name(index: Int): String =
+        namesAndValues.getOrNull(index * 2) ?: throw IndexOutOfBoundsException("name[$index]")
+
+    fun value(index: Int): String =
+        namesAndValues.getOrNull(index * 2 + 1) ?: throw IndexOutOfBoundsException("value[$index]")
 
     fun newBuilder(): Builder {
         val result = Builder()
@@ -42,6 +59,10 @@ class Headers internal constructor(
         }
 
         fun build(): Headers = Headers(namesAndValues.toTypedArray())
+    }
+
+    override fun iterator(): Iterator<Pair<String, String>> {
+        return Array(size) { name(it) to value(it) }.iterator()
     }
 
     // override operator fun iterator(): Iterator<Pair<String, String>> = commonIterator()

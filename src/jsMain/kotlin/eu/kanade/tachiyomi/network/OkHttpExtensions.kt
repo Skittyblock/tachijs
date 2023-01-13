@@ -28,8 +28,11 @@ fun Call.asObservable(): Observable<Response> {
                         if (!subscriber.isUnsubscribed()) {
                             subscriber.onNext(response)
                             subscriber.onCompleted()
+                        } else {
+                            console.log("no")
                         }
-                    } catch (e: Throwable) {
+                    } catch (e: Exception) {
+                        console.log("aaa")
                         if (!subscriber.isUnsubscribed()) {
                             subscriber.onError(e)
                         }

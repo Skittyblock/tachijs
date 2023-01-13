@@ -29,8 +29,9 @@ class OnSubscribeMap<T, R>(
             val result: R
             result = try {
                 mapper.call(t)
-            } catch (ex: Throwable) {
+            } catch (ex: Exception) {
 //                rx.exceptions.Exceptions.throwIfFatal(ex)
+                console.log("call error!", ex)
                 unsubscribe()
 //                onError(OnErrorThrowable.addValueAsLastCause(ex, t))
                 return

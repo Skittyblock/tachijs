@@ -14,12 +14,13 @@ class SubscriptionList: Subscription {
         if (!unsubscribed) {
             subscriptions.add(s)
         }
-        s.unsubscribe()
+//        s.unsubscribe() // i don't understand this
     }
 
     override fun isUnsubscribed(): Boolean = unsubscribed
 
     override fun unsubscribe() {
+        console.log("sub list unsub")
         if (!unsubscribed) {
             unsubscribed = true
             unsubscribeFromAll()

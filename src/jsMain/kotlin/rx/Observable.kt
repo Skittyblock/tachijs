@@ -1,8 +1,13 @@
 package rx
 
+import rx.functions.Action0
 import rx.functions.Action1
+import rx.functions.Actions
 import rx.functions.Func1
+import rx.internal.operators.OnSubscribeDoOnEach
 import rx.internal.operators.OnSubscribeMap
+import rx.internal.operators.OnSubscribeThrow
+import rx.internal.util.ActionObserver
 import rx.internal.util.ScalarSynchronousObservable
 
 
@@ -17,6 +22,17 @@ open class Observable<T>(
         fun <T> unsafeCreate(f: OnSubscribe<T>?): Observable<T> {
             return Observable(f)
         }
+
+        fun <T> error(exception: Throwable): Observable<T> {
+            return unsafeCreate(OnSubscribeThrow<T>(exception))
+        }
+    }
+
+    fun doOnNext(onNext: Action1<T>): Observable<T> {
+        val onError: Action1<Throwable> = Actions.empty<Throwable, Any, Any, Any, Any, Any, Any, Any, Any>()
+        val onCompleted: Action0 = Actions.empty()
+        val observer: Observer<T> = ActionObserver<T>(onNext, onError, onCompleted)
+        return unsafeCreate(OnSubscribeDoOnEach<T>(this, observer))
     }
 
     fun <R> map(func: Func1<in T, out R>): Observable<R> {
